@@ -12,9 +12,10 @@
     "is-buffer.js"
   ],
   "dependencies": {
-    "debug": "~3.1.0",
     "component-emitter": "1.2.1",
-    "isarray": "2.0.1"
+    "debug": "~3.1.0",
+    "isarray": "2.0.1",
+    "yieldable-json": "^1.0.1"
   },
   "devDependencies": {
     "benchmark": "2.1.2",

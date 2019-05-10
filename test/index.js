@@ -20,14 +20,6 @@ var blobBuilderSupported = !!BlobBuilder && !!BlobBuilder.prototype.append && !!
 
 require('./parser.js');
 
-if (!env.browser) {
-  require('./buffer.js');
-}
-
-if (typeof ArrayBuffer !== 'undefined') {
-  require('./arraybuffer.js');
-}
-
 if (blobSupported || blobBuilderSupported) {
   require('./blob.js');
 }
