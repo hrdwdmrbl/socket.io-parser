@@ -122,7 +122,7 @@ class Encoder {
 
     // json data
     if (null != packet.data) {
-      const payload = this._tryStringify(packet.data);
+      const payload = await this._tryStringify(packet.data);
       if (payload !== false) {
         encodedPacket += payload;
       } else {
@@ -137,14 +137,18 @@ class Encoder {
   /**
    * @private
    * @param {Object} object
-   * @return {string|false}
+   * @return {Promise}
    */
   _tryStringify(object) {
-    try {
-      return JSON.stringify(object);
-    } catch (e) {
-      return false;
-    }
+    return new Promise(resolve => {
+      yieldableJSON.stringifyAsync(object, (error, stringifiedJSON) => {
+        if (error) {
+          resolve(false);
+        } else {
+          resolve(stringifiedJSON);
+        }
+      });
+    });
   }
 
 }
