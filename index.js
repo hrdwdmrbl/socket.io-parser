@@ -5,6 +5,7 @@
 const debug = require('debug')('socket.io-parser');
 const Emitter = require('component-emitter');
 const isArray = require('isarray');
+const yieldableJSON = require('yieldable-json');
 
 /**
  * Protocol version.
@@ -94,15 +95,17 @@ class Encoder {
   encode(packet, callback) {
     debug('encoding packet %j', packet);
 
-    const encodedPacket = this._encodePacket(packet);
-    callback([encodedPacket]);
+    const encodedPacketPromise = this._encodePacket(packet);
+    encodedPacketPromise.then(encodedPacket => {
+      callback([encodedPacket]);
+    });
   }
 
   /**
    * @private
    * @param {Packet} packet
    */
-  _encodePacket(packet) {
+  async _encodePacket(packet) {
     // first is type
     let encodedPacket = '' + packet.type;
 
@@ -133,11 +136,12 @@ class Encoder {
 
   /**
    * @private
-   * @param {string} str
+   * @param {Object} object
+   * @return {string|false}
    */
-  _tryStringify(str) {
+  _tryStringify(object) {
     try {
-      return JSON.stringify(str);
+      return JSON.stringify(object);
     } catch (e) {
       return false;
     }
@@ -156,12 +160,14 @@ class Decoder extends Emitter {
   /**
    * Decodes an encoded packet string into packet JSON.
    *
-   * @param {String} encodedPacket - encoded packet
+   * @param {String} encodedPacket
    */
   add(encodedPacket) {
     if (typeof encodedPacket === 'string') {
-      const packet = this._decodePacket(encodedPacket);
-      this.emit('decoded', packet);
+      const packetPromise = this._decodePacket(encodedPacket);
+      packetPromise.then(packet => {
+        this.emit('decoded', packet);
+      })
     } else {
       throw new Error('Unknown type: ' + encodedPacket);
     }
@@ -170,10 +176,10 @@ class Decoder extends Emitter {
    * Decode a packet String (JSON data)
    *
    * @param {String} encodedPacket
-   * @return {Packet} packet
+   * @return {Promise}
    * @private
    */
-  _decodePacket(encodedPacket) {
+  async _decodePacket(encodedPacket) {
     let i = 0;
     // look up type
     const packet = {
@@ -218,7 +224,7 @@ class Decoder extends Emitter {
 
     // look up json data
     if (encodedPacket.charAt(++i)) {
-      const payload = this._tryParse(encodedPacket.substr(i));
+      const payload = await this._tryParse(encodedPacket.substr(i));
       const isPayloadValid = payload !== false && (packet.type === exports.ERROR || isArray(payload));
       if (isPayloadValid) {
         packet.data = payload;
@@ -233,14 +239,19 @@ class Decoder extends Emitter {
 
   /**
    * @private
-   * @param {string} str
+   * @param {string} encodedData
+   * @return {Object|false}
    */
-  _tryParse(str) {
-    try {
-      return JSON.parse(str);
-    } catch (e) {
-      return false;
-    }
+  _tryParse(encodedData) {
+    return new Promise(resolve => {
+      yieldableJSON.parseAsync(encodedData, (error, parsedJSON) => {
+        if (error) {
+          resolve(false);
+        } else {
+          resolve(parsedJSON);
+        }
+      });
+    });
   }
 
   /**

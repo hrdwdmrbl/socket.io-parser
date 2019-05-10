@@ -6,7 +6,7 @@ var encoder = new parser.Encoder();
 module.exports.test = function(obj){
   encoder.encode(obj, function(encodedPackets) {
     var decoder = new parser.Decoder();
-    decoder.on('decoded', function(packet) {
+    decoder.once('decoded', function(packet) {
       expect(packet).to.eql(obj);
     });
 
@@ -19,7 +19,7 @@ module.exports.test_bin = function test_bin(obj) {
   var originalData = obj.data;
   encoder.encode(obj, function(encodedPackets) {
     var decoder = new parser.Decoder();
-    decoder.on('decoded', function(packet) {
+    decoder.once('decoded', function(packet) {
       obj.data = originalData;
       obj.attachments = undefined;
       expect(obj).to.eql(packet);
