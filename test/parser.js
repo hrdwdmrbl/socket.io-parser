@@ -10,8 +10,6 @@ describe('parser', function(){
     expect(parser.EVENT).to.be.a('number');
     expect(parser.ACK).to.be.a('number');
     expect(parser.ERROR).to.be.a('number');
-    expect(parser.BINARY_EVENT).to.be.a('number');
-    expect(parser.BINARY_ACK).to.be.a('number');
   });
 
   it('encodes connection', function(){
